@@ -49,6 +49,21 @@ return function (App $app) {
         $group->post('/{id}/status', \App\Application\Actions\Task\UpdateTaskStatusAction::class);
     })->add(AuthMiddleware::class);
     
+// Tim (Team Page)
+    $container = $app->getContainer();
+    $app->get('/tim', function ($request, $response, $args) use ($container) {
+        $view = $container->get('view');
+        $db = $container->get('db');
+        $userId = $_SESSION['user_id'] ?? null;
+        if (!$userId) {
+            return $response->withHeader('Location', '/login')->withStatus(302);
+        }
+        $user = $db->get('users', '*', ['id' => $userId]);
+        $html = $view->render('tim.twig', ['user' => $user]);
+        $response->getBody()->write($html);
+        return $response;
+    })->add(AuthMiddleware::class);
+
      // User Profile
     $app->get('/profile', \App\Application\Actions\User\ProfileAction::class)->add(AuthMiddleware::class);
     $app->post('/profile', \App\Application\Actions\User\ProfileAction::class)->add(AuthMiddleware::class);

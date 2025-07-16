@@ -1,0 +1,245 @@
+{% extends "layout.twig" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block header %}Dashboard{% endblock %}
+
+{# Tidak perlu menyalin ulang blok user/avatar, karena sudah diatur di layout.twig dan otomatis muncul di semua halaman yang extend layout.twig #}
+
+{% block head %}
+<style>
+.selesai-btn {
+    background: linear-gradient(90deg,#10b981,#34d399);
+    color: #fff !important;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.10);
+    transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+    outline: none;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    display: inline-block;
+}
+.selesai-btn:hover, .selesai-btn:focus {
+    background: linear-gradient(90deg,#059669,#10b981);
+    box-shadow: 0 4px 16px rgba(16,185,129,0.18);
+    transform: translateY(-2px) scale(1.03);
+}
+.priority-dot {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    margin-right: 2px;
+    box-shadow: 0 1px 4px rgba(44,62,80,0.10);
+    border: 2px solid #fff;
+}
+.priority-dot.high { background: #ef4444; }
+.priority-dot.medium { background: #f59e0b; }
+.priority-dot.low { background: #6366f1; }
+@media (max-width: 600px) {
+    .selesai-btn { min-width: 70px; font-size: 0.93rem; padding: 7px 12px; }
+    .priority-dot { width: 10px; height: 10px; }
+}
+.dark-mode .dashboard-grid > div {
+    background: #23232a !important;
+}
+#progressChart { background: #fff; border-radius: 16px; }
+.dark-mode #progressChart { background: #23232a !important; }
+.dashboard-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.13), 0 1.5px 6px 0 rgba(16,185,129,0.10);
+}
+.dark-mode .dashboard-card {
+    background: #23232a !important;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.13), 0 1.5px 6px 0 rgba(16,185,129,0.10);
+    border-radius: 18px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-bottom:2.5rem;">
+    <div style="background:white;border-radius:16px;box-shadow:0 2px 8px rgba(44,62,80,0.07);padding:2.2rem 1.2rem;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:2rem;font-weight:700;color:#6366f1;">{{ totalTasks }}</div>
+        <div style="color:#64748b;">Total Tugas</div>
+    </div>
+    <div style="background:white;border-radius:16px;box-shadow:0 2px 8px rgba(44,62,80,0.07);padding:2.2rem 1.2rem;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:2rem;font-weight:700;color:#10b981;">{{ doneTasks }}</div>
+        <div style="color:#64748b;">Tugas Selesai</div>
+    </div>
+    <div style="background:white;border-radius:16px;box-shadow:0 2px 8px rgba(44,62,80,0.07);padding:2.2rem 1.2rem;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:2rem;font-weight:700;color:#ef4444;">{{ lateTasks }}</div>
+        <div style="color:#64748b;">Tugas Terlambat</div>
+    </div>
+    <div style="background:white;border-radius:16px;box-shadow:0 2px 8px rgba(44,62,80,0.07);padding:2.2rem 1.2rem;display:flex;flex-direction:column;align-items:center;">
+        <div style="font-size:2rem;font-weight:700;color:#6366f1;" id="upcomingTasks">{{ upcomingTasks }}</div>
+        <div style="color:#64748b;">Tugas Mendatang</div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2rem;align-items:start;">
+    <div class="dashboard-card" style="padding:1.5rem;height:396px;">
+        <div style="font-weight:600;font-size:1.1rem;margin-bottom:1.2rem;">Progress Tugas</div>
+        <div style="max-width:380px;margin:auto;">
+            <canvas id="progressChart"></canvas>
+        </div>
+    </div>
+    <div class="dashboard-card" style="padding:1.5rem;height:396px;">
+        <div style="font-weight:600;font-size:1.1rem;margin-bottom:1.2rem;">Tasks left by week</div>
+        <div style="width:100%;max-width:380px;margin:auto;">
+            <canvas id="tasksByWeekChart" height="320"></canvas>
+        </div>
+    </div>
+    <div class="dashboard-card" style="padding:1.5rem;flex:1;min-width:0;max-width:380px;height:396px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;">
+        <div style="font-weight:600;font-size:1.1rem;margin-bottom:1.2rem;">Tugas Hari Ini</div>
+        {% if todayTasks and todayTasks|length > 0 %}
+            <div style="flex:1 1 auto;min-height:0;overflow-y:auto;">
+                <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:1.1rem;">
+                    {% for task in todayTasks %}
+                    {% set p = task.priority|lower %}
+                    <li style="border-bottom:1px solid #f1f5f9;padding-bottom:0.7rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1.2rem;">
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <span class="priority-dot {% if p == 'high' %}high{% elseif p == 'medium' %}medium{% else %}low{% endif %}"></span>
+                                <div style="font-weight:600;font-size:1.08rem;color:#6366f1;word-break:break-word;">{{ task.title }}</div>
+                            </div>
+                            <div style="color:#64748b;font-size:0.98rem;margin-bottom:0.2rem;word-break:break-word;">{{ task.description }}</div>
+                            <div style="font-size:0.93rem;color:#94a3b8;">Deadline: {{ task.deadline|date('d M Y') }}</div>
+                        </div>
+                        <button onclick="markTaskDone({{ task.id }})" class="btn btn-primary btn-xs selesai-btn" style="font-size:0.98rem;padding:7px 22px;margin-top:0.2rem;min-width:90px;">Selesai</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            <div style="color:#cbd5e1;text-align:center;">Tidak ada tugas untuk hari ini.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function showToast(msg, color) {
+    var toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.style.position = 'fixed';
+        toast.style.top = '24px';
+        toast.style.right = '24px';
+        toast.style.zIndex = '9999';
+        toast.style.display = 'none';
+        toast.style.padding = '12px 20px';
+        toast.style.background = '#10b981';
+        toast.style.color = 'white';
+        toast.style.borderRadius = '8px';
+        toast.style.fontWeight = '500';
+        toast.style.boxShadow = '0 2px 8px rgba(44,62,80,0.12)';
+        toast.style.minWidth = '180px';
+        toast.style.textAlign = 'center';
+        toast.style.transition = 'all 0.3s';
+        document.body.appendChild(toast);
+    }
+    toast.innerText = msg;
+    toast.style.background = color || '#10b981';
+    toast.style.display = 'block';
+    setTimeout(function(){ toast.style.display = 'none'; }, 2000);
+}
+const ctx = document.getElementById('progressChart').getContext('2d');
+const progressChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Selesai', 'Aktif', 'Baru', 'Terlambat'],
+        datasets: [{
+            data: [{{ chartData.done|default(0) }}, {{ chartData.ongoing|default(0) }}, {{ chartData.new|default(0) }}, {{ chartData.late|default(0) }}],
+            backgroundColor: [
+                '#10b981', // Selesai
+                '#f59e0b', // Aktif
+                '#6366f1', // Baru
+                '#ef4444'  // Terlambat
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        cutout: '70%',
+        plugins: {
+            legend: { display: true, position: 'bottom', labels: { color: getChartLabelColor() } },
+            title: { display: true, text: 'Progress Tugas', color: getChartLabelColor(), font: { size: 20, weight: 'bold' } },
+            background: { color: getChartBgColor() }
+        },
+        backgroundColor: getChartBgColor()
+    }
+});
+function getChartLabelColor() {
+    return document.body.classList.contains('dark-mode') ? '#e5e7eb' : '#64748b';
+}
+function getChartBgColor() {
+    return document.body.classList.contains('dark-mode') ? '#23232a' : '#fff';
+}
+function updateChartColors() {
+    const color = getChartLabelColor();
+    const bg = getChartBgColor();
+    progressChart.options.plugins.legend.labels.color = color;
+    progressChart.options.plugins.title.color = color;
+    if (progressChart.options.plugins.background) progressChart.options.plugins.background.color = bg;
+    progressChart.options.backgroundColor = bg;
+    progressChart.update();
+}
+// Update chart colors on dark mode toggle
+// Hapus baris berikut:
+// const darkModeSwitch = document.getElementById('darkModeSwitch');
+// darkModeSwitch && darkModeSwitch.addEventListener('change', updateChartColors);
+// Update on page load
+updateChartColors();
+
+function updateDashboardChart(total, completed) {
+    progressChart.data.datasets[0].data = [completed, total];
+    progressChart.update();
+}
+
+function markTaskDone(id) {
+    fetch('/tasks/' + id + '/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'done' })
+    }).then(res => {
+        if (res.ok) {
+            showToast('Tugas selesai!');
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast('Gagal update tugas!', '#ef4444');
+        }
+    });
+}
+
+// Tasks left by week stacked bar chart
+const tasksByWeekChartData = {{ tasksByWeekChartData|json_encode|raw }};
+const ctxTasksByWeek = document.getElementById('tasksByWeekChart').getContext('2d');
+const tasksByWeekChart = new Chart(ctxTasksByWeek, {
+    type: 'bar',
+    data: {
+        labels: tasksByWeekChartData.labels,
+        datasets: tasksByWeekChartData.datasets
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: true, position: 'bottom' },
+            title: { display: false }
+        },
+        scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true }
+        }
+    }
+});
+</script>
+<!-- Toast Notification jika belum ada -->
+<div id="toast" style="position:fixed;top:24px;right:24px;z-index:9999;display:none;padding:12px 20px;background:#10b981;color:white;border-radius:8px;font-weight:500;box-shadow:0 2px 8px rgba(44,62,80,0.12);min-width:180px;text-align:center;transition:all 0.3s;">Berhasil!</div>
+{% endblock %}

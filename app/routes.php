@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Application\Actions\User\ListUsersAction;
 use App\Application\Actions\User\ViewUserAction;
+use App\Application\Middleware\AuthMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
@@ -24,4 +25,14 @@ return function (App $app) {
         $group->get('', ListUsersAction::class);
         $group->get('/{id}', ViewUserAction::class);
     });
+
+    // Auth routes
+    $app->get('/login', \App\Application\Actions\Auth\LoginAction::class);
+    $app->post('/login', \App\Application\Actions\Auth\LoginAction::class);
+    $app->get('/register', \App\Application\Actions\Auth\RegisterAction::class);
+    $app->post('/register', \App\Application\Actions\Auth\RegisterAction::class);
+    $app->get('/logout', \App\Application\Actions\Auth\LogoutAction::class);
+
+    // Dashboard
+    $app->get('/dashboard', \App\Application\Actions\Dashboard\DashboardAction::class)->add(AuthMiddleware::class);
 };

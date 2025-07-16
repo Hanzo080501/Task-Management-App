@@ -39,7 +39,16 @@ return function (App $app) {
         // Riwayat (History/Completed Tasks)
     $app->map(['GET', 'POST'], '/riwayat', \App\Application\Actions\Task\RiwayatAction::class)->add(AuthMiddleware::class);
 
-
+    // Task Management
+    $app->group('/tasks', function (Group $group) {
+        $group->get('', \App\Application\Actions\Task\ListTasksAction::class);
+        $group->post('', \App\Application\Actions\Task\CreateTaskAction::class);
+        $group->get('/{id}', \App\Application\Actions\Task\ViewTaskAction::class);
+        $group->post('/{id}/update', \App\Application\Actions\Task\UpdateTaskAction::class);
+        $group->post('/{id}/delete', \App\Application\Actions\Task\DeleteTaskAction::class);
+        $group->post('/{id}/status', \App\Application\Actions\Task\UpdateTaskStatusAction::class);
+    })->add(AuthMiddleware::class);
+    
      // User Profile
     $app->get('/profile', \App\Application\Actions\User\ProfileAction::class)->add(AuthMiddleware::class);
     $app->post('/profile', \App\Application\Actions\User\ProfileAction::class)->add(AuthMiddleware::class);

@@ -1,0 +1,346 @@
+{% extends "layout.twig" %}
+
+{% block title %}Task List{% endblock %}
+{% block header %}Task List{% endblock %}
+
+{% block content %}
+<div class="task-list-controls" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-bottom:1.5rem;">
+    <form method="get" style="display:flex;gap:0.7rem;flex-wrap:wrap;align-items:center;">
+        <input type="text" name="q" value="{{ filter.q|default('') }}" placeholder="Cari tugas..." class="form-control" style="min-width:180px;">
+        <select name="status" class="form-control">
+            <option value="all">Semua Status</option>
+            <option value="new" {% if filter.status=='new' %}selected{% endif %}>Baru</option>
+            <option value="ongoing" {% if filter.status=='ongoing' %}selected{% endif %}>Sedang dikerjakan</option>
+            <option value="done" {% if filter.status=='done' %}selected{% endif %}>Selesai</option>
+        </select>
+        <select name="priority" class="form-control">
+            <option value="all">Semua Prioritas</option>
+            <option value="High" {% if filter.priority=='High' %}selected{% endif %}>Prioritas Tinggi</option>
+            <option value="Medium" {% if filter.priority=='Medium' %}selected{% endif %}>Medium</option>
+            <option value="Low" {% if filter.priority=='Low' %}selected{% endif %}>Rendah</option>
+        </select>
+        <label style="display:flex;align-items:center;font-size:0.97rem;gap:0.3rem;">
+            <input type="checkbox" name="overdue" value="1" {% if filter.overdue=='1' %}checked{% endif %}>
+            Overdue
+        </label>
+        <select name="sort" class="form-control">
+            <option value="">Urutkan</option>
+            <option value="deadline" {% if filter.sort=='deadline' %}selected{% endif %}>Deadline</option>
+            <option value="priority" {% if filter.sort=='priority' %}selected{% endif %}>Prioritas</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+    {# Hapus form tambah tugas dari bawah tabel, pastikan hanya ada modal #}
+
+    {# Tambahkan modal pop-up untuk tambah/edit tugas (sudah ada di file, pastikan tetap ada) #}
+    <!-- Modal Add/Edit Task -->
+    <div id="addTaskModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Tambah Tugas</div>
+                <button type="button" class="close-btn" onclick="closeAddTaskModal()">&times;</button>
+            </div>
+            <form id="addTaskForm">
+                <input type="hidden" name="status" id="addTaskStatus" value="new">
+                <input type="hidden" name="id" id="editTaskId">
+                <div class="form-group">
+                    <label class="form-label">Judul</label>
+                    <input type="text" name="title" class="form-control" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Deskripsi</label>
+                    <textarea name="description" class="form-control" id="taskDesc"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Deadline</label>
+                    <input type="date" name="deadline" class="form-control" id="taskDeadline">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prioritas</label>
+                    <select name="priority" class="form-control" id="taskPriority">
+                        <option value="High">High</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTaskModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Tambahkan style untuk modal agar lebih modern #}
+    <style>
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(30,41,59,0.18);
+        backdrop-filter: blur(2px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-content {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+        padding: 2.2rem 2rem 1.5rem 2rem;
+        min-width: 320px;
+        max-width: 95vw;
+        position: relative;
+        animation: modalIn 0.18s;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    @keyframes modalIn {
+        from { transform: translateY(40px) scale(0.98); opacity: 0; }
+        to { transform: none; opacity: 1; }
+    }
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.2rem;
+    }
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: 0.5px;
+    }
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #64748b;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .close-btn:hover { color: #f43f5e; }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin-bottom: 0.7rem;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #64748b;
+        font-size: 1.05rem;
+        margin-bottom: 0.1rem;
+    }
+    .form-control {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.7rem 0.9rem;
+        font-size: 1.08rem;
+        background: #f8fafc;
+        transition: border 0.2s;
+        outline: none;
+    }
+    .form-control:focus {
+        border-color: #6366f1;
+        background: #fff;
+    }
+    textarea.form-control {
+        min-height: 60px;
+        resize: vertical;
+    }
+    .btn-group {
+        display: flex;
+        gap: 0.7rem;
+        margin-top: 0.5rem;
+    }
+    .btn-primary {
+        background: linear-gradient(90deg,#6366f1,#818cf8);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7rem 1.5rem;
+        font-size: 1.08rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+        transition: background 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(90deg,#4f46e5,#6366f1);
+        box-shadow: 0 4px 16px rgba(99,102,241,0.18);
+    }
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.7rem 1.5rem;
+        font-size: 1.08rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+    }
+    .btn-secondary:hover {
+        background: #e0e7ff;
+        color: #6366f1;
+    }
+    @media (max-width: 600px) {
+        .modal-content { padding: 1.2rem 0.5rem; min-width: 90vw; }
+    }
+    </style>
+
+    {# Pastikan tombol '+ Tambah Tugas' memanggil openAddTaskModal('new') #}
+    <button onclick="openAddTaskModal('new')" class="btn btn-primary">+ Tambah Tugas</button>
+
+    {# Tambahkan event agar klik di luar modal menutup modal #}
+    <script>
+    document.addEventListener('mousedown', function(e) {
+        var modal = document.getElementById('addTaskModal');
+        if (!modal.classList.contains('hidden')) {
+            var content = modal.querySelector('.modal-content');
+            if (e.target === modal) {
+                closeAddTaskModal();
+            }
+        }
+    });
+    </script>
+</div>
+
+<div class="task-table-wrapper" style="overflow-x:auto;">
+<table class="task-table" style="width:100%;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(44,62,80,0.07);border-collapse:collapse;">
+    <thead>
+        <tr style="background:#f1f5f9;">
+            <th style="padding:12px 8px;text-align:left;">Judul</th>
+            <th style="padding:12px 8px;text-align:left;">Deskripsi</th>
+            <th style="padding:12px 8px;text-align:left;">Status</th>
+            <th style="padding:12px 8px;text-align:left;">Prioritas</th>
+            <th style="padding:12px 8px;text-align:left;">Deadline</th>
+            <th style="padding:12px 8px;text-align:left;">Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 8px;min-width:120px;">{{ task.title }}</td>
+            <td style="padding:10px 8px;min-width:180px;">{{ task.description }}</td>
+            <td style="padding:10px 8px;">
+                {% if task.status == 'done' %}
+                    <span style="color:#10b981;font-weight:600;">Selesai</span>
+                {% elseif task.status == 'ongoing' %}
+                    <span style="color:#f59e0b;font-weight:600;">Sedang dikerjakan</span>
+                {% else %}
+                    <span style="color:#6366f1;font-weight:600;">Baru</span>
+                {% endif %}
+            </td>
+            <td style="padding:10px 8px;">
+                {% if task.priority == 'High' %}
+                    <span style="color:#ef4444;font-weight:600;">High</span>
+                {% elseif task.priority == 'Medium' %}
+                    <span style="color:#f59e0b;font-weight:600;">Medium</span>
+                {% else %}
+                    <span style="color:#6366f1;font-weight:600;">Low</span>
+                {% endif %}
+            </td>
+            <td style="padding:10px 8px;">{{ task.deadline ? task.deadline|date('d M Y') : '-' }}</td>
+            <td style="padding:10px 8px;white-space:nowrap;">
+                <button onclick="markTaskDone({{ task.id }})" class="btn btn-primary btn-xs" style="font-size:0.9rem;padding:4px 10px;">Selesai</button>
+                <button class="btn btn-secondary btn-xs edit-btn"
+                        data-task='{{ task|json_encode|e('html_attr') }}'
+                        style="font-size:0.9rem;padding:4px 10px;">Edit</button>
+                <form method="post" action="/tasks/{{ task.id }}/delete" style="display:inline;">
+                    <button type="submit" class="btn btn-secondary btn-xs" style="font-size:0.9rem;padding:4px 10px;" onclick="return confirm('Hapus tugas ini?')">Hapus</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#cbd5e1;padding:2rem;">Tidak ada tugas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" style="position:fixed;top:24px;right:24px;z-index:9999;display:none;padding:12px 20px;background:#10b981;color:white;border-radius:8px;font-weight:500;box-shadow:0 2px 8px rgba(44,62,80,0.12);min-width:180px;text-align:center;transition:all 0.3s;">Berhasil!</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showToast(msg, color) {
+    var toast = document.getElementById('toast');
+    toast.innerText = msg;
+    toast.style.background = color || '#10b981';
+    toast.style.display = 'block';
+    setTimeout(function(){ toast.style.display = 'none'; }, 2000);
+}
+function openAddTaskModal(status) {
+    document.getElementById('addTaskModal').classList.remove('hidden');
+    document.getElementById('addTaskModal').classList.add('active');
+    document.getElementById('modalTitle').innerText = 'Tambah Tugas';
+    document.getElementById('addTaskForm').reset();
+    document.getElementById('addTaskStatus').value = status || 'new';
+    document.getElementById('editTaskId').value = '';
+}
+function openEditTaskModal(task) {
+    document.getElementById('addTaskModal').classList.remove('hidden');
+    document.getElementById('addTaskModal').classList.add('active');
+    document.getElementById('modalTitle').innerText = 'Edit Tugas';
+    document.getElementById('taskTitle').value = task.title;
+    document.getElementById('taskDesc').value = task.description;
+    document.getElementById('taskDeadline').value = task.deadline || '';
+    document.getElementById('taskPriority').value = task.priority;
+    document.getElementById('addTaskStatus').value = task.status;
+    document.getElementById('editTaskId').value = task.id || '';
+}
+function closeAddTaskModal() {
+    document.getElementById('addTaskModal').classList.add('hidden');
+    document.getElementById('addTaskModal').classList.remove('active');
+}
+document.getElementById('addTaskForm').onsubmit = function(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(this));
+    let url = '/tasks';
+    let method = 'POST';
+    if (data.id && data.id !== '') {
+        url = '/tasks/' + data.id + '/update';
+        method = 'POST';
+    }
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(res => {
+        if (res.ok) {
+            showToast('Tugas berhasil disimpan!');
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast('Gagal menyimpan tugas!', '#ef4444');
+        }
+    });
+};
+function markTaskDone(id) {
+    fetch('/tasks/' + id + '/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'done' })
+    }).then(res => {
+        if (res.ok) {
+            showToast('Tugas selesai!');
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast('Gagal update tugas!', '#ef4444');
+        }
+    });
+}
+document.querySelectorAll('.edit-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var task = JSON.parse(this.getAttribute('data-task'));
+        openEditTaskModal(task);
+    });
+});
+</script>
+{% endblock %} 

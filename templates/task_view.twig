@@ -1,0 +1,16 @@
+{% extends "layout.twig" %}
+
+{% block title %}Task Detail{% endblock %}
+{% block header %}Task Detail{% endblock %}
+
+{% block content %}
+<div class="task-card" style="max-width:500px;margin:auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 2px 8px rgba(44,62,80,0.07);">
+    <form method="post" action="/tasks/{{ task.id }}/update" style="display:flex;flex-direction:column;gap:1rem;">
+        <label>Judul</label>
+        <input type="text" name="title" value="{{ task.title }}" required class="form-control">
+        <label>Deskripsi</label>
+        <textarea name="description" class="form-control">{{ task.description }}</textarea>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+</div>
+{% endblock %} 

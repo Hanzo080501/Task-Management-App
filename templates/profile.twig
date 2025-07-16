@@ -1,0 +1,219 @@
+{% extends "layout.twig" %}
+
+{% block title %}Profile{% endblock %}
+{% block header %}Profile{% endblock %}
+
+{% block content %}
+<style>
+.profile-card-wp {
+    max-width: 520px;
+    margin: 3rem auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.10);
+    padding: 2.5rem 2rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    border: 1.5px solid #f1f5f9;
+}
+.profile-avatar-wp {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#6366f1,#4f46e5 80%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.7rem;
+    font-weight: 700;
+    margin: 0 auto 0.7rem auto;
+    box-shadow: 0 4px 16px rgba(44,62,80,0.13);
+    border: 4px solid #fff;
+    position: relative;
+    cursor: pointer;
+    transition: box-shadow 0.3s;
+    overflow: hidden;
+}
+.profile-avatar-wp:hover {
+    box-shadow: 0 8px 32px 0 rgba(99,102,241,0.18);
+}
+.profile-avatar-wp .avatar-upload-text {
+    position: absolute;
+    left: 0; right: 0; bottom: 10px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #e0e7ef;
+    font-weight: 500;
+    opacity: 0.95;
+    pointer-events: none;
+}
+.profile-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+.profile-form-wp {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+.profile-row {
+    display: flex;
+    gap: 1.2rem;
+}
+.profile-row > .form-group { flex: 1; }
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.form-label {
+    font-weight: 500;
+    color: #64748b;
+    font-size: 1.05rem;
+    margin-bottom: 0.1rem;
+}
+.form-control {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    font-size: 1.08rem;
+    background: #f8fafc;
+    transition: border 0.2s;
+    outline: none;
+}
+.form-control:focus {
+    border-color: #6366f1;
+    background: #fff;
+}
+textarea.form-control {
+    min-height: 60px;
+    resize: vertical;
+}
+.profile-switch-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 1.2rem 0 0.2rem 0;
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+.switch input { display: none; }
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #e2e8f0;
+    border-radius: 24px;
+    transition: .3s;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: .3s;
+    box-shadow: 0 1px 4px rgba(44,62,80,0.10);
+}
+input:checked + .slider {
+    background: #6366f1;
+}
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+.profile-save-btn {
+    width: 100%;
+    padding: 0.9rem 0;
+    font-size: 1.13rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 8px;
+    background: linear-gradient(90deg,#6366f1,#818cf8);
+    color: #fff;
+    border: none;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    margin-top: 1.2rem;
+}
+.profile-save-btn:hover {
+    background: linear-gradient(90deg,#4f46e5,#6366f1);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.18);
+}
+@media (max-width: 600px) {
+    .profile-card-wp { padding: 1.2rem 0.5rem; }
+    .profile-row { flex-direction: column; gap: 0.5rem; }
+}
+</style>
+<div class="profile-card-wp">
+    <form method="post" class="profile-form-wp" enctype="multipart/form-data">
+        <label for="avatarInput" style="margin:0 auto;cursor:pointer;">
+            <div class="profile-avatar-wp" title="Click to change photo">
+                {% if user.avatar %}
+                    <img src="{{ user.avatar }}" alt="Avatar" class="profile-avatar-img" id="avatarPreview">
+                {% else %}
+                    <i class="fas fa-user" style="font-size:2.7rem;"></i>
+                    <span class="avatar-upload-text">Click to change photo</span>
+                {% endif %}
+            </div>
+            <input type="file" name="avatar" id="avatarInput" accept="image/*" style="display:none;">
+        </label>
+        <div class="profile-row">
+            <div class="form-group">
+                <label class="form-label">First name</label>
+                <input type="text" name="first_name" class="form-control" value="{{ user.first_name|default('') }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Last name</label>
+                <input type="text" name="last_name" class="form-control" value="{{ user.last_name|default('') }}" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Public display name</label>
+            <input type="text" name="display_name" class="form-control" value="{{ user.display_name|default(user.username) }}" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">About me</label>
+            <textarea name="about" class="form-control">{{ user.about|default('') }}</textarea>
+        </div>
+        <button type="submit" class="profile-save-btn">Save profile details</button>
+    </form>
+</div>
+<script>
+// Preview avatar saat file dipilih
+const avatarInput = document.getElementById('avatarInput');
+if (avatarInput) {
+    avatarInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                let preview = document.getElementById('avatarPreview');
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.className = 'profile-avatar-img';
+                    preview.id = 'avatarPreview';
+                    const avatarDiv = avatarInput.closest('label').querySelector('.profile-avatar-wp');
+                    avatarDiv.innerHTML = '';
+                    avatarDiv.appendChild(preview);
+                }
+                preview.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+</script>
+{% endblock %} 

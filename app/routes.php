@@ -35,4 +35,9 @@ return function (App $app) {
 
     // Dashboard
     $app->get('/dashboard', \App\Application\Actions\Dashboard\DashboardAction::class)->add(AuthMiddleware::class);
+
+
+     // User Profile
+    $app->get('/profile', \App\Application\Actions\User\ProfileAction::class)->add(AuthMiddleware::class);
+    $app->post('/profile', \App\Application\Actions\User\ProfileAction::class)->add(AuthMiddleware::class);
 };

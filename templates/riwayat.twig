@@ -1,0 +1,132 @@
+{% extends "layout.twig" %}
+
+{% block title %}Riwayat Tugas Selesai{% endblock %}
+{% block header %}Riwayat Tugas Selesai{% endblock %}
+
+{% block content %}
+<div class="riwayat-page-card">
+    <div class="riwayat-page-title">Tugas Selesai</div>
+    {# Hapus form tombol hapus semua riwayat di sini #}
+    {% if completedTasks and completedTasks|length > 0 %}
+        <ul class="riwayat-page-list">
+            {% for task in completedTasks %}
+            <li class="riwayat-page-item">
+                <span class="priority-dot {% if task.priority=='High' %}high{% elseif task.priority=='Medium' %}medium{% else %}low{% endif %}"></span>
+                <span class="riwayat-page-title-task">{{ task.title }}</span>
+                <span class="riwayat-page-desc">{{ task.description }}</span>
+                <span class="riwayat-page-deadline">Deadline: {{ task.deadline|date('d M Y') }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="riwayat-empty">Belum ada tugas selesai.</div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+.riwayat-page-card {
+    width: 90%;
+    max-width: 90%;
+    margin: 2.5rem auto 0 auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.13);
+    padding: 2.2rem 2.5rem 2rem 2.5rem;
+    border: 1.5px solid #f1f5f9;
+}
+.riwayat-page-title {
+    font-weight: 700;
+    font-size: 1.18rem;
+    color: #10b981;
+    margin-bottom: 1.3rem;
+    text-align: center;
+}
+.riwayat-page-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+.riwayat-page-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 1.1rem 1.2rem 0.9rem 1.2rem;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.06);
+    border-left: 5px solid #10b98122;
+    position: relative;
+}
+.riwayat-page-title-task {
+    font-weight: 600;
+    color: #10b981;
+    font-size: 1.08rem;
+    margin-bottom: 0.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.riwayat-page-desc {
+    color: #64748b;
+    font-size: 0.99rem;
+    margin-bottom: 0.1rem;
+    word-break: break-word;
+}
+.riwayat-page-deadline {
+    color: #94a3b8;
+    font-size: 0.93rem;
+    margin-top: 0.1rem;
+}
+.riwayat-empty {
+    color: #cbd5e1;
+    text-align: center;
+    font-size: 1.05rem;
+    padding: 1.2rem 0 0.5rem 0;
+}
+.priority-dot {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    margin-right: 7px;
+    box-shadow: 0 1px 4px rgba(44,62,80,0.10);
+    border: 2px solid #fff;
+}
+.priority-dot.high { background: #ef4444; }
+.priority-dot.medium { background: #f59e0b; }
+.priority-dot.low { background: #6366f1; }
+.btn-hapus-riwayat {
+    width: 100%;
+    background: linear-gradient(90deg,#ef4444,#f87171);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.08rem;
+    padding: 0.85rem 0;
+    margin-bottom: 0.7rem;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.10);
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+    letter-spacing: 0.2px;
+}
+.btn-hapus-riwayat:hover, .btn-hapus-riwayat:focus {
+    background: linear-gradient(90deg,#dc2626,#ef4444);
+    box-shadow: 0 4px 16px rgba(239,68,68,0.18);
+    transform: translateY(-2px) scale(1.03);
+}
+.dark-mode .riwayat-page-item {
+    border-left: 5px solid #10b981;
+    box-shadow: 0 2px 12px rgba(16,185,129,0.18);
+    background: #23232a;
+}
+@media (max-width: 900px) {
+    .riwayat-page-card { padding: 1.2rem 0.5rem; }
+}
+</style>
+{% endblock %} 

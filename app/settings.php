@@ -21,6 +21,21 @@ return function (ContainerBuilder $containerBuilder) {
                     'path' => isset($_ENV['docker']) ? 'php://stdout' : __DIR__ . '/../logs/app.log',
                     'level' => Logger::DEBUG,
                 ],
+                // Medoo Database settings
+                'db' => [
+                    'type' => 'mysql',
+                    'database' => 'task_management',
+                    'host' => 'localhost',
+                    'username' => 'root',
+                    'password' => '',
+                    'charset' => 'utf8mb4',
+                ],
+                // Twig settings
+                'twig' => [
+                    'template_path' => __DIR__ . '/../templates',
+                    'cache_path' => __DIR__ . '/../var/cache/twig',
+                    'debug' => true,
+                ],
             ]);
         }
     ]);

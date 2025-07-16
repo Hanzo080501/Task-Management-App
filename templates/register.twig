@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - TaskApp</title>
+    <link rel="stylesheet" href="/auth.css">
+</head>
+<body class="auth-bg">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">TaskApp</div>
+            <h2 class="auth-title">Register</h2>
+            {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+            {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+            <form method="post" class="auth-form">
+                <label>Username</label>
+                <input type="text" name="username" required>
+                <label>Password</label>
+                <input type="password" name="password" required>
+                <label>Konfirmasi Password</label>
+                <input type="password" name="confirm" required>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+            <div class="auth-link">Sudah punya akun? <a href="/login">Login</a></div>
+        </div>
+    </div>
+</body>
+</html> 

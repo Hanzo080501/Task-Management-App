@@ -36,6 +36,9 @@ return function (App $app) {
     // Dashboard
     $app->get('/dashboard', \App\Application\Actions\Dashboard\DashboardAction::class)->add(AuthMiddleware::class);
 
+        // Riwayat (History/Completed Tasks)
+    $app->map(['GET', 'POST'], '/riwayat', \App\Application\Actions\Task\RiwayatAction::class)->add(AuthMiddleware::class);
+
 
      // User Profile
     $app->get('/profile', \App\Application\Actions\User\ProfileAction::class)->add(AuthMiddleware::class);
